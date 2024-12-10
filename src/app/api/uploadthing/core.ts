@@ -26,14 +26,14 @@ const middleware = async () => {
 }
 
 const onUploadComplete = async ({
-  metadata,
-  file,
-}: {
+                                  metadata,
+                                  file,
+                                }: {
   metadata: Awaited<ReturnType<typeof middleware>>
   file: {
     key: string
     name: string
-    url: string
+    url: string // Direct URL provided by Uploadthing
   }
 }) => {
   const isFileExist = await db.file.findFirst({
@@ -49,20 +49,14 @@ const onUploadComplete = async ({
       key: file.key,
       name: file.name,
       userId: metadata.userId,
-      url: `https://uploadthing-prod.s3.us-west-2.amazonaws.com/${file.key}`,
+      url: file.url, // Use Uploadthing URL directly
       uploadStatus: 'PROCESSING',
     },
   })
 
   try {
-    const response = await fetch(
-      `https://uploadthing-prod.s3.us-west-2.amazonaws.com/${file.key}`
-    )
-
-    const blob = await response.blob()
-
-    const loader = new PDFLoader(blob)
-
+    // Load the PDF directly from the Uploadthing URL
+    const loader = new PDFLoader(file.url)
     const pageLevelDocs = await loader.load()
 
     const pagesAmt = pageLevelDocs.length
@@ -71,16 +65,16 @@ const onUploadComplete = async ({
     const { isSubscribed } = subscriptionPlan
 
     const isProExceeded =
-      pagesAmt >
-      PLANS.find((plan) => plan.name === 'Pro')!.pagesPerPdf
+        pagesAmt >
+        PLANS.find((plan) => plan.name === 'Pro')!.pagesPerPdf
     const isFreeExceeded =
-      pagesAmt >
-      PLANS.find((plan) => plan.name === 'Free')!
-        .pagesPerPdf
+        pagesAmt >
+        PLANS.find((plan) => plan.name === 'Free')!
+            .pagesPerPdf
 
     if (
-      (isSubscribed && isProExceeded) ||
-      (!isSubscribed && isFreeExceeded)
+        (isSubscribed && isProExceeded) ||
+        (!isSubscribed && isFreeExceeded)
     ) {
       await db.file.update({
         data: {
@@ -92,7 +86,7 @@ const onUploadComplete = async ({
       })
     }
 
-    // vectorize and index entire document
+    // Vectorize and index the document
     const pinecone = await getPineconeClient()
     const pineconeIndex = pinecone.Index('quill')
 
@@ -101,12 +95,12 @@ const onUploadComplete = async ({
     })
 
     await PineconeStore.fromDocuments(
-      pageLevelDocs,
-      embeddings,
-      {
-        pineconeIndex,
-        namespace: createdFile.id,
-      }
+        pageLevelDocs,
+        embeddings,
+        {
+          pineconeIndex,
+          namespace: createdFile.id,
+        }
     )
 
     await db.file.update({
@@ -131,11 +125,11 @@ const onUploadComplete = async ({
 
 export const ourFileRouter = {
   freePlanUploader: f({ pdf: { maxFileSize: '4MB' } })
-    .middleware(middleware)
-    .onUploadComplete(onUploadComplete),
+      .middleware(middleware)
+      .onUploadComplete(onUploadComplete),
   proPlanUploader: f({ pdf: { maxFileSize: '16MB' } })
-    .middleware(middleware)
-    .onUploadComplete(onUploadComplete),
+      .middleware(middleware)
+      .onUploadComplete(onUploadComplete),
 } satisfies FileRouter
 
 export type OurFileRouter = typeof ourFileRouter
