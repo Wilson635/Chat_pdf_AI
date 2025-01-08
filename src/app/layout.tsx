@@ -1,7 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Providers from '@/components/Providers'
 import { cn, constructMetadata } from '@/lib/utils'
-import { Inter } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import './globals.css'
 
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -9,7 +9,11 @@ import 'simplebar-react/dist/simplebar.min.css'
 
 import { Toaster } from '@/components/ui/toaster'
 
-const inter = Inter({ subsets: ['latin'] })
+const poppins = Poppins({
+    subsets: ['latin'],
+    weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+    variable: '--font-poppins',
+})
 
 export const metadata = constructMetadata()
 
@@ -24,7 +28,7 @@ export default function RootLayout({
         <body
           className={cn(
             'min-h-screen font-sans antialiased grainy',
-            inter.className
+            poppins.className
           )}>
           <Toaster />
           <Navbar />
