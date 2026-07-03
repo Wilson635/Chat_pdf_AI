@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { getUserSubscriptionPlan } from '@/lib/stripe';
 import { getKindeServerSession } from '@kinde-oss/kinde-auth-nextjs/server';
 import { notFound, redirect } from 'next/navigation';
+import {DownloadCloud, DownloadIcon} from "lucide-react";
 
 interface PageProps {
     params: {
@@ -39,13 +40,9 @@ const TranslatePage = async ({ params }: PageProps) => {
                     <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                         Translate PDF
                     </h1>
-                    <h2 className="text-lg font-semibold mb-3">Outils de Traduction</h2>
-                    <textarea
-                        className="w-full h-48 border rounded-lg p-2 mb-4"
-                        placeholder="Entrez votre traduction ici..."
-                    ></textarea>
                     <button className="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">
-                        Traduire
+                        <DownloadIcon />
+                        Download
                     </button>
                 </div>
             </div>
